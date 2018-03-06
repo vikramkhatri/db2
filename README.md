@@ -78,9 +78,9 @@ Take away points are:
 
 - We are using --privileged option when creating the Container through docker run command. This is not ideal and in future, my personal choice is to run docker container without privilege. This is not so important right now and we will tackle this later in favor of more pressing needs.
 
-- We will use systemd ``/usr/sbin/init` as the entrypoint. We could have used our own script as an entry point. We created a systemd unit to run that script based upon systemd infrastructure. This is also not my favorite but we will tackle this later.
+- We will use systemd `/usr/sbin/init` as the entrypoint. We could have used our own script as an entry point. We created a systemd unit to run that script based upon systemd infrastructure. This is also not my favorite but we will tackle this later.
 
-- We run the script `bin/setup/initsystemd` to create a systemd unit **db2local** so that this service will run on startup and ``/usr/sbin/init` will launch this service. Thanks Aruna on this.
+- We run the script `bin/setup/initsystemd` to create a systemd unit **db2local** so that this service will run on startup and `/usr/sbin/init` will launch this service. Thanks Aruna on this.
 
 ```
 #!/bin/bash -e
@@ -140,9 +140,9 @@ systemctl mask systemd-tmpfiles-clean.timer
 
 ```  
 
-- I copy prune version of db2 tar ball named as `db2.tar.gz` folder in ``/root/bin/image`. Now, this is debatable that should we run `db2_install` while building the container or just copy the tar ball in the container. I am a big proponent of the reduced size of shipped container. If the tar ball size of less than by few hundreds MB compared to the installed software, I then would like to copy the tarball and on the first invocation of the container, install the software, create the instance and create the database.
+- I copy prune version of db2 tar ball named as `db2.tar.gz` folder in `/root/bin/image`. Now, this is debatable that should we run `db2_install` while building the container or just copy the tar ball in the container. I am a big proponent of the reduced size of shipped container. If the tar ball size of less than by few hundreds MB compared to the installed software, I then would like to copy the tarball and on the first invocation of the container, install the software, create the instance and create the database.
 
-- I am using the ``--env-file` option to pass parameters. The sample env file is kept in` /root/bin/config/db2c.env`. The sample file is:
+- I am using the `--env-file` option to pass parameters. The sample env file is kept in` /root/bin/config/db2c.env`. The sample file is:
 
 ```
 TIMEZONE=America/New_York
@@ -186,7 +186,7 @@ drwxr-xr-x 2 db2psc db2iadm 36 Mar  5 23:43 log
 
 The active logs will be in **activelogs**, archive logs will be in **archivelogs**, db2 backup will be **backup**, db2 database will be in **db2data**, db2 diag logs will be in **db2dump**, the db2 instance home directory will be **home** and other logs files will be in **log**.
 
-Now, at the host level, if this is a single instance db2, everything can be in a directory will be mounted through -v to container ``/db2mount` directory. This directory can not be on SAN, or NFS or any other shared file system. Please remember - you can nest GPFS volumes but if you use a local directory, you can keep on adding as many GPFS volumes as necessary.
+Now, at the host level, if this is a single instance db2, everything can be in a directory will be mounted through -v to container `/db2mount` directory. This directory can not be on SAN, or NFS or any other shared file system. Please remember - you can nest GPFS volumes but if you use a local directory, you can keep on adding as many GPFS volumes as necessary.
 
 Then, inside this directory, all other directory can be either GPFS mounts, GlusterFS volumnes, VMware vSAN volumes, iSCSI volumes, or NFS volumes.
 
@@ -199,7 +199,7 @@ So when I run my Db2 container, the only mount point that I need to use is the l
 I am not a big fan for the mounting several directories inside the container. This limits us the choices. What if customer wants to expand this. Through local directory, they can keep on adding mount points. This is a limitation in Sailfish, where I had to add a volume to the list and reinitialize the database. This was a big no from customer but there was no option.
 
 - The init for the db2 system is in **/root/bin/setup/init**. Please see the source and it will first check - if container is started for the first time, then:
-  * Run **createUsersAndDir** and it will create users as per **db2c.env**, create all necessary directories under ``/db2mount` if they are not there already.
+  * Run **createUsersAndDir** and it will create users as per **db2c.env**, create all necessary directories under `/db2mount` if they are not there already.
   * Run **createInstance** and it will unzip `db.tar.gz` in /tmp, run `db2_install` to install the software on /opt/ibm/db2 and then run **db2icrt** command to create the instance.
   * Run **createDatabaseDDL** command to build Db2 database creation command. I give option to specify parameters through db2c.env file or allow customer to choose their own `CREATE DATABASE` command. Please remember that customers know Db2 better than us. We can not impose artificial restrictions. If customer defines their own `CREATE DATABASE`, they can use environment variable `CREATE_DB_DDL` and put that in `db2c.env` file. The script will use this variable and create database as per customer choice. We still need them to pass the name of the database name through `DB_NAME` parameter.
   * Run **createDatabase** command to create the database. This command will take input from customer defined `DBM CFG`, `DB CFG` and `db2set` variables from files kept in `/db2mount/config` directory. The syntax of these files are simple. The `dbmcfg.txt` will have entry extacly as a customer will type when using` UPDATE DBM CFG` after using statement. Same will be the case for `dbcfg.txt`  and `db2set.txt`. I am not using any brain cells to parse the output and let customers choose what they want to use. db2set assignment can be tricky and writing a python program to parse and build db2set command is not worth the trouble. Just trust what customer is providing. The worst - it will fail and that is customer problem.
