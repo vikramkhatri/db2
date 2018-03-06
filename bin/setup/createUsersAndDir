@@ -1,0 +1,154 @@
+#!/bin/bash
+
+if [[ -z "$CFGHOME" ]] ; then
+   source /root/bin/config/setenvvars
+fi
+
+echo ===================================================
+echo Check if all environment variables are defined.
+echo ===================================================
+
+if [[ -z "$INST_UID" ]] ; then
+   echo Please make sure that INST_UID is defined in db2c.env file. Exiting ...
+   exit 1
+fi
+if [[ -z "$INST_USER" ]] ; then
+   echo Please make sure that INST_USER is defined in db2c.env file. Exiting ...
+   exit 1
+fi
+if [[ -z "$INST_PWD" ]] ; then
+   echo Please make sure that INST_PWD is defined in db2c.env file. Exiting ...
+   exit 1
+fi
+if [[ -z "$INST_GID" ]] ; then
+   echo Please make sure that INST_GID is defined in db2c.env file. Exiting ...
+   exit 1
+fi
+if [[ -z "$INST_GROUP" ]] ; then
+   echo Please make sure that INST_GROUP is defined in db2c.env file. Exiting ...
+   exit 1
+fi
+if [[ -z "$FENC_UID" ]] ; then
+   echo Please make sure that FENC_UID is defined in db2c.env file. Exiting ...
+   exit 1
+fi
+if [[ -z "$FENC_USER" ]] ; then
+   echo Please make sure that FENC_USER is defined in db2c.env file. Exiting ...
+   exit 1
+fi
+if [[ -z "$FENC_PWD" ]] ; then
+   echo Please make sure that FENC_PWD is defined in db2c.env file. Exiting ...
+   exit 1
+fi
+if [[ -z "$FENC_GID" ]] ; then
+   echo Please make sure that FENC_GID is defined in db2c.env file. Exiting ...
+   exit 1
+fi
+if [[ -z "$FENC_GROUP" ]] ; then
+   echo Please make sure that FENC_GROUP is defined in db2c.env file. Exiting ...
+   exit 1
+fi
+if [[ -z "$INST_PORT" ]] ; then
+   echo Please make sure that INST_PORT is defined in db2c.env file. Exiting ...
+   exit 1
+fi
+if [[ -z "$SSL_PORT" ]] ; then
+   echo Please make sure that SSL_PORT is defined in db2c.env file. Exiting ...
+   exit 1
+fi
+if [[ -z "$DB_NAME" ]] ; then
+   echo Please make sure that DB_NAME is defined in db2c.env file. Exiting ...
+   exit 1
+fi
+
+echo INST_UID=$INST_UID
+echo INST_GID=$INST_GID
+echo INST_USER=$INST_USER
+echo INST_GROUP=$INST_GROUP
+echo FENC_UID=$INST_UID
+echo FENC_GID=$INST_GID
+echo FENC_USER=$INST_USER
+echo FENC_GROUP=$INST_GROUP
+echo INST_PORT=$INST_PORT
+echo SSL_PORT=$SSL_PORT
+echo DB_NAME=$DB_NAME
+
+echo ===================================================
+echo Create directories on db2mount
+echo For persistence, map persistent volumes under local
+echo mount /db2mount 
+echo ===================================================
+
+## Create home directory for users
+if [[ ! -d $DB2MOUNT/home ]] ; then
+  mkdir -p $DB2MOUNT/home
+fi
+
+## Create Database DBPATH directory
+if [[ ! -d $DB2MOUNT/db2data/dbpath ]] ; then
+  mkdir -p $DB2MOUNT/db2data/dbpath
+fi
+
+## Create Database DB2 data directory
+if [[ ! -d $DB2MOUNT/db2data/data ]] ; then
+  mkdir -p $DB2MOUNT/db2data/data
+fi
+## Create Database DB2 backup directory
+if [[ ! -d $DB2MOUNT/backup ]] ; then
+  mkdir -p $DB2MOUNT/backup
+fi
+## Create Database DB2 Archive directory
+if [[ ! -d $DB2MOUNT/archivelogs ]] ; then
+  mkdir -p $DB2MOUNT/archivelogs
+fi
+## Create Database DB2 Active Log directory
+if [[ ! -d $DB2MOUNT/activelogs ]] ; then
+  mkdir -p $DB2MOUNT/activelogs
+fi
+## Create Database DB2 db2dump directory
+if [[ ! -d $DB2MOUNT/db2dump ]] ; then
+  mkdir -p $DB2MOUNT/db2dump
+fi
+## Create log directory
+if [[ ! -d $DB2MOUNT/log ]] ; then
+  mkdir -p $DB2MOUNT/log
+fi
+## Create config directory
+if [[ ! -d $DB2MOUNT/config ]] ; then
+  mkdir -p $DB2MOUNT/config
+fi
+
+echo ===================================================
+echo Create $INST_USER user on $DB2MOUNT/home 
+echo ===================================================
+
+if ! id -u $INST_USER > /dev/null 2>&1 ; then
+   echo Creating group $INST_GROUP and user $INST_USER
+   groupadd -g $INST_GID $INST_GROUP
+   useradd -m -d $DB2MOUNT/home/$INST_USER -u $INST_UID -g $INST_GID $INST_USER
+   echo "$INST_USER:$INST_PWD" | chpasswd
+else
+   echo User $INST_USER already exists.
+fi
+  
+if ! id -u $FENC_USER > /dev/null 2>&1 ; then
+   echo Creating group $FENC_GROUP and user $FENC_USER
+   groupadd -g $FENC_GID $FENC_GROUP
+   useradd -m -d $DB2MOUNT/home/$FENC_USER -u $FENC_UID -g $FENC_GID $FENC_USER
+   echo "$FENC_USER:$FENC_PWD" | chpasswd
+else
+   echo User $FENC_USER already exists.
+fi
+
+echo ===================================================
+echo Change user and owner of $DB2MOUNT
+echo ===================================================
+
+chown -R $INST_USER.$INST_GROUP $DB2MOUNT
+
+echo ===================================================
+echo Unset PWD environment variables
+echo ===================================================
+
+unset $INST_PWD
+unset $FENC_PWD

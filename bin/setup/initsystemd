@@ -1,0 +1,54 @@
+#!/bin/bash -e
+
+# Preparation for systemd init
+cd /lib/systemd/system/sysinit.target.wants/; ls | grep -v systemd-tmpfiles-setup | xargs rm -f $1;
+rm -f /lib/systemd/system/multi-user.target.wants/*;
+rm -f /etc/systemd/system/*.wants/*;
+rm -f /lib/systemd/system/local-fs.target.wants/*;
+rm -f /lib/systemd/system/sockets.target.wants/*udev*;
+rm -f /lib/systemd/system/sockets.target.wants/*initctl*;
+rm -f /lib/systemd/system/basic.target.wants/*;
+rm -f /lib/systemd/system/anaconda.target.wants/*;
+
+# Install SystemD unit files for dashDB local service and Enable
+cat <<'EOF' > /etc/systemd/system/db2local.service
+[Unit]
+Description=The entrypoint script for initializing the service
+Wants=network-online.target
+After=multi-user.target
+After=network-online.target
+After=npingSrv.service
+
+[Service]
+Type=idle
+# PassEnvironment directive is only supported from SystemD v228
+# PassEnvironment=NODESFILE
+EnvironmentFile=/root/bin/config/db2c.env
+ExecStart=/root/bin/setup/init
+ExecStartPost=/bin/sh -c "rm -f /var/run/nologin"
+StandardOutput=journal+console
+StandardError=journal+console
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+chmod 664 /etc/systemd/system/db2local.service
+systemctl enable db2local.service
+
+# Configure following setting in journald:
+# * persistent logging
+# * forward to Console and enable console TTY device
+# * set the max journal size to 100MB
+mkdir -p /var/log/journal
+sed -i -e 's/\(.*\)Storage=\(.*\)/Storage=persistent/' /etc/systemd/journald.conf
+sed -i -e 's/\(.*\)SystemMaxUse=\(.*\)/SystemMaxUse=1G/' /etc/systemd/journald.conf
+sed -i -e 's/\(.*\)SplitMode=\(.*\)/SplitMode=none/' /etc/systemd/journald.conf
+
+# Set systemd /tmp cleanup to two days
+sed -i 's/10d/2d/g' /usr/lib/tmpfiles.d/tmp.conf
+# Disable tmpfile cleanup service for now. We'll re-enable after deployment.
+systemctl mask systemd-tmpfiles-clean.timer
+
+# Modify sendmail.service unit if /var/run is not sym-linked to /run
+[[ -L /var/run ]] || sed -i 's|^PIDFile\(.*\)|PIDFile=/var/run/sendmail.pid|' /usr/lib/systemd/system/sendmail.service

@@ -1,0 +1,40 @@
+#!/bin/bash
+
+if [[ -z "$CFGHOME" ]] ; then
+   source /tmp/setenvvars
+fi
+
+echo ===================================================
+echo Set default values for param if were not set
+echo ===================================================
+
+if [[ -z $CREATE_DB_DDL ]]; then
+  echo ===================================================
+  echo Building create database DDL
+  echo ===================================================
+  ENCRYPT_DB=${ENCRYPT_DB:=NO}
+  DB_CODESET=${DB_CODESET:=UTF-8}
+  DB_TERRITORY=${DB_TERRITORY:=US}
+  DB_COLLATION_SEQUENCE=${DB_COLLATION_SEQUENCE:=SYSTEM}
+  DB_PAGESIZE=${DB_PAGESIZE:=32768}
+  DB_NAME=${DB_NAME:=BLUDB}
+  if [[ "$DB_PAGESIZE" != "32768" || "$DB_PAGESIZE" != "16384" || \
+        "$DB_PAGESIZE" != "8192" || "$DB_PAGESIZE" != "4096" ]] ; then
+     DB_PAGESIZE=32768
+  fi
+  if [[ "$DB_ENCRYPT" == "YES" ]] ; then
+     DB_ENCRYPT=ENCRYPT
+  else
+     DB_ENCRYPT=
+  fi
+  CREATE_DB_DDL="CREATE DATABASE $DB_NAME ON $DB2MOUNT/db2data/dbpath DBPATH ON $DB2MOUNT/db2data/data \
+  USING CODESET $DB_CODESET TERRITORY $DB_TERRITORY COLLATE USING $DB_COLLATION_SEQUENCE \
+  PAGESIZE $DB_PAGESIZE $ENCRYPT"
+else
+  echo ===================================================
+  echo Using custom SQL
+  echo $CREATE_DB_DDL 
+  echo ===================================================
+fi
+echo CREATE_DB_DDL=$CREATE_DB_DDL
+echo $CREATE_DB_DDL > /tmp/createdb.sql

@@ -1,0 +1,77 @@
+#!/bin/bash
+
+# This script needs to run as db2 instance owner
+# The driver script should copy this to /tmp and change permission
+# for the instance user to run it.
+
+if [ "$#" -ne 1 ]; then
+   echo "Usage $0 NameofDatabase"
+   exit 1
+fi
+
+DB_NAME=$1
+
+# First make sure if db2 is installed or not
+DB2=$(which db2)
+if [ ! -x "$DB2" ] ; then
+   echo Could not find db2 command. Existing ....
+   exit 1
+fi
+
+
+echo ===================================================
+echo Apply registry variables
+echo ===================================================
+DB2SET=${DB2SET_FILE:=$DB2MOUNT/config/db2set.txt}
+if [[ -f $DB2SET ]] ; then
+   cat ${DB2SET} | sed 's/^[ \t]*//;s/[ \t]*$//' | while read value; do
+      [[ $value =~ ^#|^$ ]] && continue
+      db2set $value
+   done
+else
+   echo File $DB2SET not found.
+fi
+
+echo ===================================================
+echo Apply DBM CFG
+echo ===================================================
+DBMCFG=${DBMCFG_FILE:=$DB2MOUNT/config/dbmcfg.txt}
+if [[ -f $DBMCFG ]] ; then
+   cat ${DBMCFG} | sed 's/^[ \t]*//;s/[ \t]*$//' | while read value; do
+      [[ $value =~ ^#|^$ ]] && continue
+      db2 -v update dbm cfg using $value
+   done
+else
+   echo File $DBMCFG not found.
+fi
+
+echo ===================================================
+echo Stopping and Starting the instance
+echo ===================================================
+
+db2stop force
+db2start    
+
+CREATE_DB_DDL=$(</tmp/createdb.sql)
+
+if [[ -z $CREATE_DB_DDL ]] ; then
+   echo CREATE_DB_DDL is not set. Exiting...
+   exit 1
+else
+  echo ========================================================
+  echo Create Database : $CREATE_DB_DDL
+  echo ========================================================
+  db2 -v $CREATE_DB_DDL
+  echo ========================================================
+  echo Apply DB CFG
+  echo ========================================================
+  DBCFG=${DBCFG_FILE:=$DB2MOUNT/config/dbcfg.txt}
+  if [[ -f $DBCFG ]] ; then
+     cat ${DBCFG} | sed 's/^[ \t]*//;s/[ \t]*$//' | while read value; do
+        [[ $value =~ ^#|^$ ]] && continue
+        db2 -v update db cfg for $DB_NAME using $value
+     done
+  else
+     echo File $DBCFG not found.
+  fi
+fi

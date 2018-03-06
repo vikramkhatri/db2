@@ -1,0 +1,41 @@
+#!/bin/bash
+
+if [[ -z "$CFGHOME" ]] ; then
+   source /root/bin/config/setenvvars
+fi
+
+# Check if already untar -  Container was used before
+if [[ ! -d $BINHOME/image/server_t ]] ; then
+  echo ===================================================
+  echo Untar files from db2.tar.gz
+  echo ===================================================
+  tar xfz $BINHOME/image/db2.tar.gz -C $BINHOME/image
+else
+  echo Tarball was already unzipped
+fi
+# Check if Db2 software was installed
+if [[ ! -d opt/ibm/db2 ]] ; then
+  echo ===================================================
+  echo Install db2 software in /opt/ibm/db2
+  echo ===================================================
+  cd $BINHOME/image/server*
+  ./db2_install -y -b /opt/ibm/db2 -f NOTSAMP -p server \
+      -l $DB2MOUNT/log/db2.log -t $DB2MOUNT/log/db2.trc
+  echo ===================================================
+  echo Apply DB2 License
+  echo ===================================================
+  cd /opt/ibm/db2/adm
+  ./db2licm -a $BINHOME/license/db2de.lic
+else
+  echo Nothing to do. Db2 software was already installed.
+fi
+# Check if Db2 instance was already created in mounted volume
+if [[ ! -d $DB2MOUNT/home/$INST_USER/sqllib ]] ; then
+  echo ===================================================
+  echo Create db2 instance for $INST_USER
+  echo ===================================================
+  cd /opt/ibm/db2/instance
+  ./db2icrt -s ese -p $INST_PORT -u $FENC_USER $INST_USER
+else
+  echo Nothing to do. Instance was already created.
+fi
