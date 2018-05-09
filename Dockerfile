@@ -2,8 +2,6 @@ FROM centos:7
 ARG CONT_IMG_VER="latest"
 MAINTAINER vikram@zinox.com
 USER root
-WORKDIR /root
-ADD bin /root/bin/
 RUN rm -fr /var/cache/yum && yum clean all && yum -y update bash && \
     yum -y install dos2unix adcli authconfig bc bind bind-chroot blas-devel \
            cairo compat-libstdc++* compat-libstdc++-33 crontabs cups curl dapl dapl-devel dmidecode ed ethtool expect file  \
@@ -16,6 +14,3 @@ RUN rm -fr /var/cache/yum && yum clean all && yum -y update bash && \
            strace sudo systemtap tcl-devel texinfo-tex texlive-dvips texlive-latex tk-devel unixODBC unixODBC-devel \
            selinux-policy-targeted unzip vim wget which xdg-utils xz-devel zlib zlib-devel && \
     yum -y groupinstall "Development tools"
-RUN mkdir -p /db2mount && /root/bin/setup/initsystemd
-ENTRYPOINT [ "/usr/sbin/init" ]
-#ENTRYPOINT [ "/bin/bash" ]

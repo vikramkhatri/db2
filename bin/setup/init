@@ -6,48 +6,53 @@ if [[ -z "$CFGHOME" ]] ; then
    source /root/bin/config/setenvvars
 fi
 
+#put messages to screen as well as in a file
+exec &> >(while read line; do echo "$line" | logger_info; done;)
+#exec &> >(tee -ia $LOGFILE)
+#exec &> | logger_info
+
 if  [ ! -f $FIRST_BOOT_FLAG ] ; then
-   logger_info ===================================================
-   logger_info This is the first run of container
-   logger_info ===================================================
+   echo ===================================================
+   echo $(date +"%D %T.%3N") This is the first run of container
+   echo ===================================================
    if [[ ! -x $TIMEZONE ]] ; then
        timedatectl set-timezone $TIMEZONE
    fi
    touch $FIRST_BOOT_FLAG
    $SETHOME/createUsersAndDir
    if [[ $? -eq 1 ]] ; then
-      logger_info $SETHOME/createUsersAndDir has errors. Exiting...
+      echo $SETHOME/createUsersAndDir has errors. Exiting...
       exit 1
    fi
-   logger_info Copy setenvvars to the home directory of root
+   echo Copy setenvvars to the home directory of root
    $CP -f $CFGHOME/setenvvars /root/.setenvvars
-   logger_info Add to the .bashrc file of the  root
+   echo Add to the .bashrc file of the  root
    if ! grep -qs setenvvars /root/.bashrc; then
       echo "if [[ -f .setenvvars ]] ; then" >> /root/.bashrc
       echo "  . ./.setenvvars"              >> /root/.bashrc
       echo "fi"                             >> /root/.bashrc
-   fi 
-   logger_info Copy setenvvars to the home directory of the $INST_USER
+   fi
+   echo Copy setenvvars to the home directory of the $INST_USER
    $CP -f $CFGHOME/setenvvars $DB2MOUNT/home/$INST_USER/.setenvvars
    chown $INST_USER.$INST_GROUP $DB2MOUNT/home/$INST_USER/.setenvvars
-   logger_info Add to the .bashrc file of the $INST_USER user
+   echo Add to the .bashrc file of the $INST_USER user
    if ! grep -qs setenvvars $DB2MOUNT/home/$INST_USER/.bashrc; then
       echo "if [[ -f .setenvvars ]] ; then" >> $DB2MOUNT/home/$INST_USER/.bashrc
       echo "  . ./.setenvvars"              >> $DB2MOUNT/home/$INST_USER/.bashrc
       echo "fi"                             >> $DB2MOUNT/home/$INST_USER/.bashrc
-   fi 
+   fi
    $SETHOME/createInstance
    if [[ $? -eq 1 ]] ; then
-      logger_info $SETHOME/createInstance has errors. Exiting...
+      echo $SETHOME/createInstance has errors. Exiting...
       exit 1
    fi
    $SETHOME/creategsk8
    if [[ $? -eq 1 ]] ; then
-      logger_info $SETHOME/creategsk8 has errors. Exiting...
+      echo $SETHOME/creategsk8 has errors. Exiting...
       exit 1
    fi
 else
-   logger_info Container already initialized with Db2. Nothing to be done.
+   echo Container already initialized with Db2. Nothing to be done.
 fi
 
 # Check if database already exists in persistent volumes
@@ -58,12 +63,12 @@ if [[ ! -d $DB2MOUNT/db2data/dbpath/$INST_USER/NODE0000/$DB_NAME ]] ; then
    chown $INST_USER.$INST_GROUP $DB2MOUNT/config/createDatabase
    chmod 755 $DB2MOUNT/config/createDatabase
    if [[ $? -eq 1 ]] ; then
-      logger_info $DB2MOUNT/config/createDatabase has errors. Exiting...
+      echo $DB2MOUNT/config/createDatabase has errors. Exiting...
       exit 1
    fi
    su - $INST_USER -c "$DB2MOUNT/config/createDatabase $DB_NAME"
 else
-   logger_info Database $DB_NAME already exists. Nothing to be done.
+   echo Database $DB_NAME already exists. Nothing to be done.
 fi
 
-logger_info == DONE ==
+echo $(date +"%D %T.%3N") == DONE ==

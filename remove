@@ -1,0 +1,5 @@
+#!/bin/bash
+
+docker stop db2c
+docker rm db2c
+docker rmi ibm/db2:v11.1.3.3

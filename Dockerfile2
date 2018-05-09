@@ -1,0 +1,5 @@
+FROM centos:custom
+WORKDIR /root
+ADD bin /root/bin/
+RUN mkdir -p /db2mount && /root/bin/setup/initsystemd
+ENTRYPOINT [ "/usr/sbin/init" ]
