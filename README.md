@@ -12,7 +12,7 @@ Untar the file in some folder. Run the following command.
 Replace the name of the tar file with the one you downloaded.
 
 ```
-# tar xvfz v11.1.2fp2b_linuxx64_server_t.tar.gz
+# tar xvfz v11.1.3fp3_linuxx64_server_t.tar.gz
 # cd server_t/db2/linuxamd64/utilities/db2iprune/
 ```
 
@@ -21,16 +21,23 @@ You can edit db2server_t.prn to uncomment the components that you not want.
 For Db2 with minumum install, I created the following db2prune.txt file
 
 ```
+# sed -e '/^\*.*/d' -e '/^$/d' db2server_t.prn
+PRUNE_PROD               = CONNECT_SERVER                      ** DB2 Connect Server
+PRUNE_PROD               = RUNTIME_CLIENT                      ** IBM Data Server Runtime Client
+PRUNE_COMP               = ACS                                 ** Integrated Flash Copy Support
+PRUNE_COMP               = DB2_DATA_SOURCE_SUPPORT             ** DB2 data source support
+PRUNE_COMP               = DB2_UPDATE_SERVICE                  ** DB2 Update Service
+PRUNE_COMP               = FED_DATA_SOURCE_SUPPORT             ** Federated Data Access Support
+PRUNE_COMP               = FIRST_STEPS                         ** First Steps
 PRUNE_COMP               = GPFS                                ** General Parallel File System (GPFS)
 PRUNE_COMP               = GUARDIUM_INST_MNGR_CLIENT           ** Guardium Installation Manager Client
 PRUNE_COMP               = IINR_APPLICATIONS_WRAPPER           ** Application data sources
-PRUNE_COMP               = IINR_SCIENTIFIC_WRAPPER             ** Scientific Data Sources
 PRUNE_COMP               = IINR_STRUCTURED_FILES_WRAPPER       ** Structured file data sources
 PRUNE_COMP               = INFORMIX_DATA_SOURCE_SUPPORT        ** Informix data source support
+PRUNE_COMP               = INSTANCE_SETUP_SUPPORT              ** DB2 Instance Setup wizard
 PRUNE_COMP               = LDAP_EXPLOITATION                   ** DB2 LDAP support
 PRUNE_COMP               = ORACLE_DATA_SOURCE_SUPPORT          ** Oracle data source support
 PRUNE_COMP               = PURESCALE                           ** IBM DB2 pureScale Feature
-PRUNE_COMP               = REPL_CLIENT                         ** Replication tools
 PRUNE_COMP               = SPATIAL_EXTENDER_CLIENT_SUPPORT     ** Spatial Extender client
 PRUNE_COMP               = SPATIAL_EXTENDER_SERVER_SUPPORT     ** Spatial Extender server support
 PRUNE_COMP               = SQL_SERVER_DATA_SOURCE_SUPPORT      ** SQL Server data source support
@@ -45,7 +52,7 @@ PRUNE_LANG               = ALL             ** Remove all except English
 Run the db2prune command to build new directory containing components that we do not need.
 
 ```
-# /db2iprune -r ./db2prune.txt -o /tmp/server_t
+# ./db2iprune -r ./db2prune.txt -o /tmp/server_t
 ```
 
 The minimum install will be created on /tmp/server_t directory. Create the tarball.
@@ -214,3 +221,4 @@ I am not a big fan for the mounting several directories inside the container. Th
   *  Run db2_icrt to create instance and add a CF
   *  Run db2iupdt to add member, CFs etc.
   *  Create database
+

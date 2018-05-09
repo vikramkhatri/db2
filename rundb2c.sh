@@ -10,4 +10,4 @@ docker run -d -it \
    --env-file=./bin/config/db2c.env \
    -h db2chost \
    -p 50000-50001:50000-50001 \
-   ibm/db2:v11.1.2.2
+   ibm/db2:v11.1.3.3

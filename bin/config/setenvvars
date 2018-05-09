@@ -2,6 +2,7 @@
 
 # Set here variables for consistency in shell scripting and those which are likely to change
 
+export LOGFILE=/var/log/db2.log
 export CP=/bin/cp
 export RM=/bin/rm
 
@@ -9,9 +10,91 @@ export BINHOME=/root/bin
 export SETHOME=$BINHOME/setup
 export CFGHOME=$BINHOME/config
 export DB2MOUNT=/db2mount
-export LOGFILE=/tmp/db2local_init.log
 export FIRST_BOOT_FLAG=/var/log/firstboot.log
 
 export SSH="/bin/ssh -q -o PreferredAuthentications=publickey \
             -o StrictHostKeyChecking=no"
 export SCP="/bin/scp -q -o StrictHostKeyChecking=no"
+
+timestamp() 
+{
+    date +'%Y-%m-%d %H:%M:%S.%3N'
+}
+
+logger_time_sec() 
+{
+    date '+%s'
+}
+
+logger ()
+{
+    echo "[$(timestamp): (`basename -- $0`)] $*" >> $LOGFILE 
+    return 0
+}
+
+console_msg()
+{
+    echo "$*" > /proc/1/fd/1
+}
+
+logger_info ()
+{
+    local LEVEL="INFO"
+    if [ -n "$1" ]; then
+        logger " $LEVEL: $1"
+        console_msg "$1"
+    else
+        while read IN
+        do
+            logger " $LEVEL: $IN"
+            console_msg "$IN"
+        done
+    fi
+    return 0
+}
+
+logger_debug ()
+{
+    local LEVEL="DEBUG"
+    if [ -n "$1" ]; then
+        logger " $LEVEL: $1"
+    else
+        while read IN
+        do
+            logger " $LEVEL: $IN"
+        done
+    fi
+    return 0
+}
+
+logger_warning ()
+{
+    local LEVEL="WARNING"
+    if [ -n "$1" ]; then
+        logger " $LEVEL: $1"
+        console_msg "$1"
+    else
+        while read IN
+        do
+            logger " $LEVEL: $IN"
+            console_msg "$IN"
+        done
+    fi
+    return 0
+}
+
+logger_error ()
+{
+    local LEVEL="ERROR"
+    if [ -n "$1" ]; then
+        logger " $LEVEL: $1"
+        console_msg "$1"
+    else
+        while read IN
+        do
+            logger " $LEVEL: $IN"
+            console_msg "$IN"
+        done
+    fi
+    return 0
+}
