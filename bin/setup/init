@@ -11,6 +11,8 @@ exec &> >(while read line; do echo "$line" | logger_info; done;)
 #exec &> >(tee -ia $LOGFILE)
 #exec &> | logger_info
 
+logger_info "Starting the work ..."
+
 if  [ ! -f $FIRST_BOOT_FLAG ] ; then
    echo ===================================================
    echo $(date +"%D %T.%3N") This is the first run of container
@@ -47,6 +49,7 @@ if  [ ! -f $FIRST_BOOT_FLAG ] ; then
       exit 1
    fi
    $SETHOME/creategsk8
+   su - $INST_USER -c "db2iauto -on $INST_USER"
    if [[ $? -eq 1 ]] ; then
       echo $SETHOME/creategsk8 has errors. Exiting...
       exit 1
@@ -71,4 +74,11 @@ else
    echo Database $DB_NAME already exists. Nothing to be done.
 fi
 
+/bin/cp -f $SETHOME/startInstance /tmp
+chown $INST_USER.$INST_GROUP /tmp/startInstance
+su - $INST_USER -c "/tmp/startInstance"
+su - $INST_USER -c "db2 activate database $DB_NAME"
+
 echo $(date +"%D %T.%3N") == DONE ==
+
+logger_info "Ending work ... "

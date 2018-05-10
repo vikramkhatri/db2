@@ -5,9 +5,12 @@ echo Run db2 container
 echo =================================================
 
 docker run -d -it \
-   --privileged \
-   --name=db2c \
-   --env-file=./bin/config/db2c.env \
-   -h db2chost \
-   -p 50000-50001:50000-50001 \
-   ibm/db2:v11.1.3.3
+ --privileged=true \
+ -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
+ -v /db2mount:/db2mount \
+ --name=db2c \
+ --tmpfs /run/systemd/system \
+ --cap-add SYS_ADMIN \
+ --env-file=./bin/config/db2c.env \
+ -h db2chost \
+ ibm/db2:v11.1.3.3
