@@ -23,7 +23,7 @@ After=npingSrv.service
 Type=idle
 # PassEnvironment directive is only supported from SystemD v228
 # PassEnvironment=NODESFILE
-EnvironmentFile=/root/bin/config/db2c.env
+# EnvironmentFile=/root/bin/config/db2c.env
 ExecStart=/root/bin/setup/init
 ExecStartPost=/bin/sh -c "rm -f /var/run/nologin"
 StandardOutput=journal+console

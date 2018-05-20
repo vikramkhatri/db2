@@ -11,6 +11,13 @@ exec &> >(while read line; do echo "$line" | logger_info; done;)
 #exec &> >(tee -ia $LOGFILE)
 #exec &> | logger_info
 
+xargs -L1 -0 echo export < /proc/1/environ > /tmp/env
+# Quote before exporting to handle ENV vars values with spaces
+sed -i -e 's/=/=\"/' -e 's/$/\"/' /tmp/env
+. /tmp/env
+
+cat /tmp/env
+
 logger_info "Starting the work ..."
 
 if  [ ! -f $FIRST_BOOT_FLAG ] ; then
