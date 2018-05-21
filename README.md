@@ -213,6 +213,138 @@ I am not a big fan for the mounting several directories inside the container. Th
 
 - If container is already initialized, it will just see if software is installed, instance and database is created and then it will exit.
 
+## Run Docker container
+
+We are going to use 2 methods to run the docker containers.
+
+### Use Host network
+
+This is simple and straightforward method where containers share the host network. It means that if I am running multiple db2 containers, each must have a different port number assigned to the db2 instance (Same case when you create multiple Db2 instances on the same host).
+
+If we run SSH inside the db2 container, it can use same port 22 inside the container but that port must be mapped to a port on the host.
+
+Example of running Db2 container with host network.
+
+```
+#!/bin/bash
+
+echo =================================================
+echo Run db2 container
+echo =================================================
+
+docker run -d -it \
+ --privileged=true \
+ -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
+ -v /db2c:/db2mount \
+ --name=db2c \
+ --tmpfs /run/systemd/system \
+ --cap-add SYS_ADMIN \
+ --env-file=./bin/config/db2c.env \
+ -p 50000-50001:50000-50001 \
+ -p 50022:22 \
+ -h db2c \
+ ibm/db2:v11.1.3.3
+```
+
+Note that SSH port 22 inside the container is mapped to port 50022 on the host and db2 instance port 50000 is mapped to port 50000 on the host.
+
+If SSH connection needs to be made from outside to the db2 container, you would running
+
+```
+$ ssh -p 50022 -l db2psc <hostIPAddress>
+```
+
+### Use Seperate IP address on the same host subnet
+
+We can use separate IP address on the same subnet and assign that to the container.
+
+For this, we need to create a docker network [Reference is here](http://blog.oddbit.com/2018/03/12/using-docker-macvlan-networks/)
+
+```
+#!/bin/bash
+
+echo =================================================
+echo Create macvlan network
+echo =================================================
+
+docker network create -d macvlan -o parent=eth0 \
+  --subnet 192.168.142.0/24 \
+  --gateway 192.168.142.2 \
+  --ip-range 192.168.142.192/27 \
+  --aux-address 'host=192.168.142.223' \
+  mynet
+
+ip link add mynet-shim link eth0 type macvlan  mode bridge
+ip addr add 192.168.142.223/32 dev mynet-shim
+ip link set mynet-shim up
+ip route add 192.168.142.192/27 dev mynet-shim
+```
+
+Explanation: macvlan Docker driver is used for create a docker network.
+
+In above example, the VM is running with a subnet of 192.168.142.0 with gateway assigned to 192.168.142.2 (VMware vnet8 network)
+
+We are defining a IP Address range 192.168.142.192/27, which is a range of 32 IP addresses from 192.168.142.192 to 102.168.142.223.
+
+As per the [reference quoted](http://blog.oddbit.com/2018/03/12/using-docker-macvlan-networks/):-
+
+> With a container attached to a macvlan network, you will find that while it can contact other systems on your local network without a problem, the container will not be able to connect to your host (and your host will not be able to connect to your container). This is a limitation of macvlan interfaces: without special support from a network switch, your host is unable to send packets to its own macvlan interfaces.
+
+> Fortunately, there is a workaround for this problem: you can create another macvlan interface on your host, and use that to communicate with containers on the macvlan network.
+
+In the Docker network command, we reserve an address from our network range for use by the host interface by using the --aux-address option set to 192.168.142.223.  
+
+In order to route packets from host to the container, the following steps are followed:
+
+```
+ip link add mynet-shim link eth0 type macvlan  mode bridge
+ip addr add 192.168.142.223/32 dev mynet-shim
+ip link set mynet-shim up
+ip route add 192.168.142.192/27 dev mynet-shim
+```
+The modified command to start the container.
+
+```
+#!/bin/bash
+
+echo =================================================
+echo Run db2 container
+echo =================================================
+
+docker run -d -it \
+ --privileged=true \
+ -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
+ -v /db2c:/db2mount \
+ --name=db2c \
+ --tmpfs /run/systemd/system \
+ --cap-add SYS_ADMIN \
+ --env-file=./bin/config/db2c.env \
+ --net mynet \
+ --ip 192.168.142.193 \
+ -h db2c \
+ ibm/db2:v11.1.3.3
+```
+
+Note that we are using --net set to mynet and IP address for the container is set to 192.168.142.193
+
+Now this container is like a VM with its own IP address and we do not have to worry about port mapping for SSH and Db2 running inside containers.
+
+This gives a great flexibility to run multiple Db2 containers on same host (or different hosts) but using its own IP addresses.
+
+Additional Commands:
+
+After container is started:-
+
+```
+# docker ps --> Shows running containers
+# docker ps -a --> Shows all containers including stopped ones
+# docker network ls --> List docker networks
+# docker stop db2c --> Stops the container
+# docker rm db2c --> Removes the container
+# docker images --> Lists all docker images
+# docker rmi <imageid> --> Removed the docker image from /var/lib/docker folder
+```
+
 ## Future Works:
 
 - This will become our basis for creating of pureScale container and we will need to do the following.
@@ -221,4 +353,3 @@ I am not a big fan for the mounting several directories inside the container. Th
   *  Run db2_icrt to create instance and add a CF
   *  Run db2iupdt to add member, CFs etc.
   *  Create database
-

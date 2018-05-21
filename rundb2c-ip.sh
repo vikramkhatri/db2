@@ -12,7 +12,7 @@ docker run -d -it \
  --tmpfs /run/systemd/system \
  --cap-add SYS_ADMIN \
  --env-file=./bin/config/db2c.env \
- -p 50000-50001:50000-50001 \
- -p 50022:22 \
+ --net mynet \
+ --ip 192.168.142.193 \
  -h db2c \
  ibm/db2:v11.1.3.3

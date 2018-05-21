@@ -38,4 +38,8 @@ if [[ ! -d $DB2MOUNT/home/$INST_USER/sqllib ]] ; then
   ./db2icrt -s ese -p $INST_PORT -u $FENC_USER $INST_USER
 else
   echo Nothing to do. Instance was already created.
+  echo Fixing file permissions
+  cd /opt/ibm/db2/instance
+  ./db2iupdt -k $INST_USER
+  echo Done fixing file permissions
 fi

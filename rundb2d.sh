@@ -13,5 +13,6 @@ docker run -d -it \
  --cap-add SYS_ADMIN \
  --env-file=./bin/config/db2d.env \
  -p 59000-59001:59000-59001 \
+ -p 51022:22 \
  -h db2d \
  ibm/db2:v11.1.3.3
