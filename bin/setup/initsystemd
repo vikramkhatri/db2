@@ -10,7 +10,7 @@ rm -f /lib/systemd/system/sockets.target.wants/*initctl*;
 rm -f /lib/systemd/system/basic.target.wants/*;
 rm -f /lib/systemd/system/anaconda.target.wants/*;
 
-# Install SystemD unit files for dashDB local service and Enable
+# Install SystemD unit files for db2 local service and Enable
 cat <<'EOF' > /etc/systemd/system/db2local.service
 [Unit]
 Description=The entrypoint script for initializing the service
@@ -35,6 +35,31 @@ EOF
 
 chmod 664 /etc/systemd/system/db2local.service
 systemctl enable db2local.service
+
+# Install SystemD unit files for db2 api service and Enable
+cat <<'EOF' > /etc/systemd/system/db2api.service
+[Unit]
+Description=The entrypoint script for db2 api service
+Wants=network-online.target
+After=multi-user.target
+After=network-online.target
+After=npingSrv.service
+
+[Service]
+Type=idle
+# PassEnvironment directive is only supported from SystemD v228
+# PassEnvironment=NODESFILE
+ExecStart=/root/bin/db2-api
+ExecStartPost=/bin/sh -c "rm -f /var/run/nologin"
+StandardOutput=journal+console
+StandardError=journal+console
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+chmod 664 /etc/systemd/system/db2api.service
+systemctl enable db2api.service
 
 # Configure following setting in journald:
 # * persistent logging

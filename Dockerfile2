@@ -2,5 +2,5 @@ FROM centos:custom
 WORKDIR /root
 ADD bin /root/bin/
 RUN mkdir -p /db2mount && /root/bin/setup/initsystemd && systemctl enable sshd && \
-    ln -s /bin/db2-api /root/bin/db2-api
+    ln -s /root/bin/db2-api /bin/db2-api
 ENTRYPOINT [ "/usr/sbin/init" ]
