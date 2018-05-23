@@ -11,6 +11,7 @@ export SETHOME=$BINHOME/setup
 export CFGHOME=$BINHOME/config
 export DB2MOUNT=/db2mount
 export FIRST_BOOT_FLAG=/var/log/firstboot.log
+export INITDONE=$DB2MOUNT/db2init.done
 
 export SSH="/bin/ssh -q -o PreferredAuthentications=publickey \
             -o StrictHostKeyChecking=no"

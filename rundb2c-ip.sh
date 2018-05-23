@@ -1,5 +1,7 @@
 #!/bin/bash
 
+IP=${1:-192.168.142.193}
+
 echo =================================================
 echo Run db2 container
 echo =================================================
@@ -13,6 +15,6 @@ docker run -d -it \
  --cap-add SYS_ADMIN \
  --env-file=./bin/config/db2c.env \
  --net mynet \
- --ip 192.168.142.193 \
+ --ip $IP \
  -h db2c \
  ibm/db2:v11.1.3.3

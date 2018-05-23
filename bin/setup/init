@@ -2,6 +2,9 @@
 #
 # Source environment variables
 
+rm -f /var/log/healthiness
+rm -f /var/log/liveliness
+
 if [[ -z "$CFGHOME" ]] ; then
    source /root/bin/config/setenvvars
 fi
@@ -10,6 +13,9 @@ fi
 exec &> >(while read line; do echo "$line" | logger_info; done;)
 #exec &> >(tee -ia $LOGFILE)
 #exec &> | logger_info
+
+echo "Starting db2 health API"
+/usr/bin/db2-api &
 
 xargs -L1 -0 echo export < /proc/1/environ > /tmp/env
 # Quote before exporting to handle ENV vars values with spaces
@@ -87,5 +93,8 @@ su - $INST_USER -c "/tmp/startInstance"
 su - $INST_USER -c "db2 activate database $DB_NAME"
 
 echo $(date +"%D %T.%3N") == DONE ==
+
+touch /var/log/healthiness
+touch /var/log/liveliness
 
 logger_info "Ending work ... "
