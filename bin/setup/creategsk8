@@ -13,8 +13,8 @@ if [[ "$DB_ENCRYPT" == "YES" ]] ; then
    DB2HOMEDIR=$DB2MOUNT/home/$INST_USER
    su - $INST_USER -c "mkdir -p $DB2HOMEDIR/keystore && $DB2HOMEDIR/sqllib/gskit/bin/gsk8capicmd_64 \
       -keydb -create -db $DB2HOMEDIR/keystore/key.p12 -pw password -type pkcs12 -stash"
-   su - $INST_USER -c "db2 update dbm cfg using keystore_type pkcs12 keystore_location /home/db2psc/keystore/key.p12"
-   su - $INST_USER -c "head -c 32 /dev/urandom > $$DB2HOMEDIR/keystore/key.label"
+   su - $INST_USER -c "db2 update dbm cfg using keystore_type pkcs12 keystore_location $DB2HOMEDIR/keystore/key.p12"
+   su - $INST_USER -c "head -c 32 /dev/urandom > $DB2HOMEDIR/keystore/key.label"
    su - $INST_USER -c "$DB2HOMEDIR/sqllib/gskit/bin/gsk8capicmd_64 -secretkey \
       -add -db $DB2HOMEDIR/keystore/key.p12 -stashed -label Mydb2Label \
       -file $DB2HOMEDIR/keystore/key.label"
