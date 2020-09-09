@@ -1,12 +1,6 @@
 #!/bin/bash
 
 TOOL=db2-orchestrator
-OS="$(uname)"
-if [ "x${OS}" = "xDarwin" ] ; then
-  OSEXT="osx"
-else
-  OSEXT="linux"
-fi
 
 # Determine the latest version by version number.
 if [ "x${DB2PC_VERSION}" = "x" ] ; then
@@ -21,17 +15,17 @@ if [ "x${DB2PC_VERSION}" = "x" ] ; then
   exit;
 fi
 
-printf "\nDownloading %s from %s ..." "$DB2PC_VERSION" "$URL"
 URL="https://github.com/vikramkhatri/db2/releases/download/$DB2PC_VERSION/$TOOL"
+printf "\nDownloading %s from %s ..." "$DB2PC_VERSION" "$URL"
 if [[ $EUID -eq 0 ]]; then
    curl -L -s $URL -o /usr/local/bin/$TOOL
    chmod +x /usr/local/bin/$TOOL
-   echo "Installed /usr/local/bin/$TOOL"
+   echo "Installed $TOOL in /usr/local/bin/$TOOL"
    ls -l /usr/local/bin/$TOOL
 else
    curl -L -s $URL -o ./$TOOL
    chmod +x ./$TOOL
-   echo "Installed $HOME/$TOOL"
+   echo "Installed in $HOME/$TOOL"
 fi
 
 
