@@ -29,8 +29,18 @@ else
 fi
 
 
-echo "To configure the tool $TOOL, run"
-echo "$TOOL init -- To create the initial yaml file to provide the cluster information"
-echo "$TOOL generate all -- To generate all scripts - if you want to see them."
-echo "$TOOL install all -- To deploy all components"
+echo "To use tool $TOOL, run"
+echo "$TOOL init               -- To create the initial yaml file that you can modify with your cluster information"
+echo "$TOOL generate all       -- To generate all scripts [Optional]"
+echo "$TOOL install all        -- To deploy all components"
+echo
+echo "$TOOL install linbit     -- To deploy linbit storage"
+echo "$TOOL install pacemaker  -- To deploy pacemaker"
+echo "$TOOL install db2        -- To deploy db2"
+echo
+echo "$TOOL cleanup linbit     -- To cleanup linbit storage"
+echo "$TOOL cleanup pacemaker  -- To cleanup pacemaker"
+echo "$TOOL cleanup db2        -- To cleanup db2"
+
+
 
